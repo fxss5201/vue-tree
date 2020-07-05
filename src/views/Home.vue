@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+    <h1 class="text-align-center">Vue-tree</h1>
     <vue-tree></vue-tree>
   </div>
 </template>
@@ -15,3 +16,9 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.text-align-center {
+  text-align: center;
+}
+</style>

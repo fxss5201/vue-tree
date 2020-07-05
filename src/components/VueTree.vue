@@ -1,6 +1,7 @@
 <template>
   <div class="tree">
     <el-tree
+      v-if="treeData.length"
       :data="treeData"
       show-checkbox
       node-key="id"
@@ -49,27 +50,27 @@
 </template>
 
 <script>
-let id = 1000
+const initTreeData = [{
+  id: 1,
+  label: '一级 1',
+  children: [{
+    id: 4,
+    label: '二级 1-1',
+    children: [{
+      id: 9,
+      label: '三级 1-1-1'
+    }, {
+      id: 10,
+      label: '三级 1-1-2'
+    }]
+  }]
+}]
+
 export default {
   name: 'VueTree',
   data () {
-    const data = [{
-      id: 1,
-      label: '一级 1',
-      children: [{
-        id: 4,
-        label: '二级 1-1',
-        children: [{
-          id: 9,
-          label: '三级 1-1-1'
-        }, {
-          id: 10,
-          label: '三级 1-1-2'
-        }]
-      }]
-    }]
     return {
-      treeData: JSON.parse(JSON.stringify(data)),
+      treeData: [],
       dialogVisible: false,
       form: {
         name: ''
@@ -83,11 +84,27 @@ export default {
     dialogTitle () {
       let res
       if (this.btnFlag === 'add') {
-        res = '添加内容'
+        res = `在 ${this.curData.label} 下添加内容`
       } else if (this.btnFlag === 'edit') {
-        res = '编辑内容'
+        res = `编辑 ${this.curData.label} 内容`
       }
       return res
+    }
+  },
+  created () {
+    if (this.$ls.get('treeData')) {
+      this.treeData = this.$ls.get('treeData')
+    } else {
+      this.$ls.set('treeData', initTreeData)
+      this.treeData = initTreeData
+    }
+  },
+  watch: {
+    treeData: {
+      deep: true,
+      handler (val) {
+        this.$ls.set('treeData', val)
+      }
     }
   },
   methods: {
@@ -106,7 +123,7 @@ export default {
     },
 
     append (data) {
-      const newChild = { id: id++, label: this.form.name, children: [] }
+      const newChild = { id: +new Date(), label: this.form.name, children: [] }
       if (!data.children) {
         this.$set(data, 'children', [])
       }
@@ -120,10 +137,25 @@ export default {
     },
 
     remove (node, data) {
-      const parent = node.parent
-      const children = parent.data.children || parent.data
-      const index = children.findIndex(d => d.id === data.id)
-      children.splice(index, 1)
+      this.$confirm(`此操作将会删除 ${data.label} 及下面所有内容, 是否继续?`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        const parent = node.parent
+        const children = parent.data.children || parent.data
+        const index = children.findIndex(d => d.id === data.id)
+        children.splice(index, 1)
+        this.$message({
+          type: 'success',
+          message: '删除成功!'
+        })
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     }
   }
 }
